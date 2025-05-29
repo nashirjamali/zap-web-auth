@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AuthClient } from '@dfinity/auth-client';
+import Image from 'next/image';
 
 // For local development, you might need to use a different URL
 // const identityProvider = process.env.NODE_ENV === 'production' 
@@ -206,7 +207,9 @@ const WhoAmI = () => {
     return (
       <div className="flex min-h-screen bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto w-full px-6 py-12">
-          <h1 className="text-4xl font-bold mb-8">Who Am I?</h1>
+          <div className="flex items-center justify-center mb-8">
+            <div className="animate-pulse h-16 w-16 bg-gray-700 rounded-full"></div>
+          </div>
           <div className="animate-pulse flex space-x-4">
             <div className="flex-1 space-y-4 py-1">
               <div className="h-4 bg-gray-700 rounded w-3/4"></div>
@@ -224,7 +227,19 @@ const WhoAmI = () => {
   return (
     <div className="flex min-h-screen bg-gray-900 text-white">
       <div className="max-w-4xl mx-auto w-full px-6 py-12">
-        <h1 className="text-4xl font-bold mb-8">Who Am I?</h1>
+        <div className="flex flex-col items-center mb-10">
+          <div className="relative w-20 h-20 mb-4">
+            <Image 
+              src="/zap.png" 
+              alt="Zap Logo" 
+              fill
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+          </div>
+          <h1 className="text-4xl font-bold text-center">Zap Authentication</h1>
+          <p className="mt-2 text-xl text-center text-blue-400">Fast payments with Internet Computer</p>
+        </div>
         
         {state.error && (
           <div className="mb-8 p-4 bg-red-900/50 border border-red-500 rounded-lg">
@@ -238,27 +253,36 @@ const WhoAmI = () => {
         )}
         
         <div className="mb-8 p-6 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4 text-blue-400">About Principal IDs</h2>
+          <div className="flex items-center mb-4">
+            <div className="relative w-8 h-8 mr-3">
+              <Image 
+                src="/icp.png" 
+                alt="Internet Computer Protocol" 
+                fill
+                style={{ objectFit: 'contain' }}
+              />
+            </div>
+            <h2 className="text-2xl font-semibold text-blue-400">Zap Payment App</h2>
+          </div>
           <p className="mb-3 text-gray-300">
-            A <strong className="text-blue-300">principal</strong> is a unique identifier in the Internet
-            Computer ecosystem that represents your identity.
+            Welcome to the Zap app - your fast and secure solution for payments with ICP (Internet Computer Protocol).
           </p>
           <p className="mb-3 text-gray-300">
             {!state.isAuthenticated ? (
               <>
-                Currently you&apos;re not logged in. After logging in with Internet Identity, 
-                you&apos;ll see your unique principal ID.
+                To start making payments, please log in with Internet Identity. 
+                This secure authentication system will generate your unique principal ID.
               </>
             ) : (
               <>
-                You&apos;re currently logged in with Internet Identity. Your unique principal ID is 
-                displayed below.
+                You&apos;re now logged in and ready to make fast payments with ICP. 
+                Your unique principal ID is displayed below.
               </>
             )}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 mb-8">
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
           {state.isLoading ? (
             <div className="px-6 py-3 rounded-md bg-gray-700 text-gray-400">
               <div className="flex items-center">
@@ -271,9 +295,14 @@ const WhoAmI = () => {
             </div>
           ) : !state.isAuthenticated ? (
             <Button onClick={login} className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-              </svg>
+              <div className="relative w-5 h-5 mr-2">
+                <Image 
+                  src="/icp.png" 
+                  alt="ICP" 
+                  fill
+                  style={{ objectFit: 'contain' }}
+                />
+              </div>
               Login with Internet Identity
             </Button>
           ) : (
