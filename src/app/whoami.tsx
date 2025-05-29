@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { AuthClient } from '@dfinity/auth-client';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -38,7 +38,28 @@ const Button: React.FC<ButtonProps> = ({ onClick, children, variant = 'primary',
   );
 };
 
-const WhoAmI = () => {
+// Loading fallback for Suspense
+const LoadingFallback = () => (
+  <div className="flex min-h-screen bg-gray-900 text-white">
+    <div className="max-w-4xl mx-auto w-full px-6 py-12">
+      <div className="flex items-center justify-center mb-8">
+        <div className="animate-pulse h-16 w-16 bg-gray-700 rounded-full"></div>
+      </div>
+      <div className="animate-pulse flex space-x-4">
+        <div className="flex-1 space-y-4 py-1">
+          <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-700 rounded"></div>
+            <div className="h-4 bg-gray-700 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Inner component that uses useSearchParams
+const WhoAmIInner = () => {
   const searchParams = useSearchParams();
   const redirectScheme = searchParams.get('redirectScheme');
   
@@ -58,6 +79,28 @@ const WhoAmI = () => {
     isLoading: false
   });
 
+  // Memoize fetchPrincipalId with useCallback
+  const fetchPrincipalId = useCallback(async () => {
+    if (!state.authClient) return;
+    
+    try {
+      setState(prev => ({ ...prev, isLoading: true }));
+      const principal = state.authClient.getIdentity().getPrincipal().toString();
+      setState(prev => ({
+        ...prev,
+        principal,
+        isLoading: false
+      }));
+    } catch (error) {
+      console.error("Error fetching principal ID:", error);
+      setState(prev => ({ 
+        ...prev, 
+        error: `Failed to fetch principal ID: ${error instanceof Error ? error.message : String(error)}`,
+        isLoading: false
+      }));
+    }
+  }, [state.authClient]);
+
   // First, check if we're running in the browser
   useEffect(() => {
     setState(prev => ({
@@ -71,7 +114,7 @@ const WhoAmI = () => {
     if (state.isAuthenticated && state.authClient) {
       fetchPrincipalId();
     }
-  }, [state.isAuthenticated]);
+  }, [state.isAuthenticated, state.authClient, fetchPrincipalId]);
 
   // Update URL with principal ID when it becomes available
   useEffect(() => {
@@ -137,27 +180,6 @@ const WhoAmI = () => {
       console.error("Error in initAuth:", error);
       setState(prev => ({ ...prev, isLoading: false }));
       throw error;
-    }
-  };
-
-  const fetchPrincipalId = async () => {
-    if (!state.authClient) return;
-    
-    try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const principal = state.authClient.getIdentity().getPrincipal().toString();
-      setState(prev => ({
-        ...prev,
-        principal,
-        isLoading: false
-      }));
-    } catch (error) {
-      console.error("Error fetching principal ID:", error);
-      setState(prev => ({ 
-        ...prev, 
-        error: `Failed to fetch principal ID: ${error instanceof Error ? error.message : String(error)}`,
-        isLoading: false
-      }));
     }
   };
 
@@ -238,24 +260,7 @@ const WhoAmI = () => {
 
   // Display a loading state if we're not on the client side yet
   if (!state.isClientSide) {
-    return (
-      <div className="flex min-h-screen bg-gray-900 text-white">
-        <div className="max-w-4xl mx-auto w-full px-6 py-12">
-          <div className="flex items-center justify-center mb-8">
-            <div className="animate-pulse h-16 w-16 bg-gray-700 rounded-full"></div>
-          </div>
-          <div className="animate-pulse flex space-x-4">
-            <div className="flex-1 space-y-4 py-1">
-              <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-              <div className="space-y-2">
-                <div className="h-4 bg-gray-700 rounded"></div>
-                <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingFallback />;
   }
 
   return (
@@ -365,6 +370,15 @@ const WhoAmI = () => {
         )}
       </div>
     </div>
+  );
+};
+
+// Wrap the component in Suspense
+const WhoAmI = () => {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <WhoAmIInner />
+    </Suspense>
   );
 };
 
