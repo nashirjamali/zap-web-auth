@@ -272,31 +272,33 @@ const WhoAmIInner = () => {
 
   // Complete auth and redirect back to the app with principal ID
 
-  /**
-   *
-   * http://zap-web-auth-t8vc.vercel.app/?redirectUrl=zap-xx%3A%2F%2Fauth&principalId=pzq44-pn54p-dv4ys-bjwvu-oi6ph-a23jl-n7dkp-jothd-jo5wq-ngmrm-iqe
-   * http://zap-web-auth-t8vc.vercel.app/?redirectUrl=zap-x//auth&principalId=pzq44-pn54p-dv4ys-bjwvu-oi6ph-a23jl-n7dkp-jothd-jo5wq-ngmrm-iqe
-   */
   const finishAuth = () => {
     if (state.principal && redirectScheme) {
-      let finalRedirectUrl;
+      // let finalRedirectUrl;
+
+      navigator.clipboard.writeText(`zapx_auth:${state.principal}`);
+      alert('Authentication successful!. Return to the app.');
+
+      window.close();
+
+
 
       try {
         // Decode the redirectScheme in case it's URL encoded
-        const decodedRedirectScheme = decodeURIComponent(redirectScheme);
+        // const decodedRedirectScheme = decodeURIComponent(redirectScheme);
 
-        // Check if it already includes the full redirect URL
-        if (decodedRedirectScheme.includes("://auth")) {
-          // If it's already a full URL like "zap-x://auth", just append the principalId
-          finalRedirectUrl = `${decodedRedirectScheme}?principalId=${state.principal}`;
-        } else {
-          // If it's just a scheme like "zap-x", construct the full URL
-          const scheme = decodedRedirectScheme.replace("://", "");
-          finalRedirectUrl = `${scheme}://auth?principalId=${state.principal}`;
-        }
+        // // Check if it already includes the full redirect URL
+        // if (decodedRedirectScheme.includes("://auth")) {
+        //   // If it's already a full URL like "zap-x://auth", just append the principalId
+        //   finalRedirectUrl = `${decodedRedirectScheme}?principalId=${state.principal}`;
+        // } else {
+        //   // If it's just a scheme like "zap-x", construct the full URL
+        //   const scheme = decodedRedirectScheme.replace("://", "");
+        //   finalRedirectUrl = `${scheme}://auth?principalId=${state.principal}`;
+        // }
 
-        console.log("Redirecting to:", finalRedirectUrl);
-        window.location.href = finalRedirectUrl;
+        // console.log("Redirecting to:", finalRedirectUrl);
+        // window.location.href = finalRedirectUrl;
       } catch (error) {
         console.error("Error processing redirect:", error);
         // Fallback to original behavior
