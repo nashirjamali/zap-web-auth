@@ -122,6 +122,15 @@ const WhoAmIInner = () => {
     }));
   }, []);
 
+  useEffect(() => {
+    if (state.principal) {
+      navigator.clipboard.writeText(`zapx_auth:${state.principal}`);
+      alert("Authentication successful!. Return to the app.");
+
+      window.close();
+    }
+  }, [state.principal]);
+
   // Fetch principal ID whenever authentication status changes
   useEffect(() => {
     if (state.isAuthenticated && state.authClient) {
