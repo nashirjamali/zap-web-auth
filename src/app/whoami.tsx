@@ -279,15 +279,29 @@ const WhoAmIInner = () => {
    */
   const finishAuth = () => {
     if (state.principal && redirectScheme) {
-      // Decode the redirectScheme in case it's URL encoded
-      const decodedRedirectScheme = decodeURIComponent(redirectScheme);
+      let finalRedirectUrl;
 
-      // Extract just the scheme part (before ://)
-      const schemeMatch = decodedRedirectScheme.match(/^([^:]+):/);
-      const scheme = schemeMatch ? schemeMatch[1] : decodedRedirectScheme;
+      try {
+        // Decode the redirectScheme in case it's URL encoded
+        const decodedRedirectScheme = decodeURIComponent(redirectScheme);
 
-      // Construct the redirect URL
-      window.location.href = `${scheme}://auth?principalId=${state.principal}`;
+        // Check if it already includes the full redirect URL
+        if (decodedRedirectScheme.includes("://auth")) {
+          // If it's already a full URL like "zap-x://auth", just append the principalId
+          finalRedirectUrl = `${decodedRedirectScheme}?principalId=${state.principal}`;
+        } else {
+          // If it's just a scheme like "zap-x", construct the full URL
+          const scheme = decodedRedirectScheme.replace("://", "");
+          finalRedirectUrl = `${scheme}://auth?principalId=${state.principal}`;
+        }
+
+        console.log("Redirecting to:", finalRedirectUrl);
+        window.location.href = finalRedirectUrl;
+      } catch (error) {
+        console.error("Error processing redirect:", error);
+        // Fallback to original behavior
+        window.location.href = `${redirectScheme}://auth?principalId=${state.principal}`;
+      }
     }
   };
 
