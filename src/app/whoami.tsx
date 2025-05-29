@@ -252,11 +252,25 @@ const WhoAmIInner = () => {
   };
 
   // Complete auth and redirect back to the app with principal ID
+
+  /**
+   * 
+   * http://zap-web-auth-t8vc.vercel.app/?redirectUrl=zap-xx%3A%2F%2Fauth&principalId=pzq44-pn54p-dv4ys-bjwvu-oi6ph-a23jl-n7dkp-jothd-jo5wq-ngmrm-iqe
+   * http://zap-web-auth-t8vc.vercel.app/?redirectUrl=zap-x//auth&principalId=pzq44-pn54p-dv4ys-bjwvu-oi6ph-a23jl-n7dkp-jothd-jo5wq-ngmrm-iqe
+   */
   const finishAuth = () => {
-    if (state.principal && redirectScheme) {
-      window.location.href = `${redirectScheme}://auth?principalId=${state.principal}`;
-    }
-  };
+  if (state.principal && redirectScheme) {
+    // Decode the redirectScheme in case it's URL encoded
+    const decodedRedirectScheme = decodeURIComponent(redirectScheme);
+    
+    // Extract just the scheme part (before ://)
+    const schemeMatch = decodedRedirectScheme.match(/^([^:]+):/);
+    const scheme = schemeMatch ? schemeMatch[1] : decodedRedirectScheme;
+    
+    // Construct the redirect URL
+    window.location.href = `${scheme}://auth?principalId=${state.principal}`;
+  }
+};
 
   // Display a loading state if we're not on the client side yet
   if (!state.isClientSide) {
