@@ -273,15 +273,13 @@ const WhoAmIInner = () => {
   // Complete auth and redirect back to the app with principal ID
 
   const finishAuth = () => {
-    if (state.principal && redirectScheme) {
-      // let finalRedirectUrl;
-
+    if (state.principal) {
       navigator.clipboard.writeText(`zapx_auth:${state.principal}`);
       alert("Authentication successful!. Return to the app.");
 
       window.close();
     }
-    
+
     if (state.principal && redirectScheme) {
       // let finalRedirectUrl;
 
