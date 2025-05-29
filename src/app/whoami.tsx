@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AuthClient } from '@dfinity/auth-client';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 
 // For local development, you might need to use a different URL
 // const identityProvider = process.env.NODE_ENV === 'production' 
@@ -38,6 +39,9 @@ const Button: React.FC<ButtonProps> = ({ onClick, children, variant = 'primary',
 };
 
 const WhoAmI = () => {
+  const searchParams = useSearchParams();
+  const redirectScheme = searchParams.get('redirectScheme');
+  
   const [state, setState] = useState<{
     authClient: AuthClient | undefined;
     isAuthenticated: boolean;
@@ -68,6 +72,22 @@ const WhoAmI = () => {
       fetchPrincipalId();
     }
   }, [state.isAuthenticated]);
+
+  // Update URL with principal ID when it becomes available
+  useEffect(() => {
+    if (state.principal && typeof window !== 'undefined') {
+      // Get current URL
+      const url = new URL(window.location.href);
+      
+      // Add or update principalId parameter
+      url.searchParams.set('principalId', state.principal);
+      
+      // Update the URL without reloading the page
+      window.history.replaceState({}, '', url.toString());
+      
+      // If redirectScheme is present, the user can click "Complete Authentication" to trigger the redirect
+    }
+  }, [state.principal, redirectScheme]);
 
   // Then initialize auth client only on the client side
   useEffect(() => {
@@ -192,6 +212,13 @@ const WhoAmI = () => {
         principal: null,
         isLoading: false
       }));
+      
+      // Remove principalId from URL
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('principalId');
+        window.history.replaceState({}, '', url.toString());
+      }
     } catch (error) {
       console.error("Error during logout:", error);
       setState(prev => ({ 
@@ -199,6 +226,13 @@ const WhoAmI = () => {
         error: `Logout failed: ${error instanceof Error ? error.message : String(error)}`,
         isLoading: false
       }));
+    }
+  };
+
+  // Complete auth and redirect back to the app with principal ID
+  const finishAuth = () => {
+    if (state.principal && redirectScheme) {
+      window.location.href = `${redirectScheme}://auth?principalId=${state.principal}`;
     }
   };
 
@@ -306,7 +340,12 @@ const WhoAmI = () => {
               Login with Internet Identity
             </Button>
           ) : (
-            <Button onClick={logout} variant="secondary">Logout</Button>
+            <>
+              <Button onClick={logout} variant="secondary">Logout</Button>
+              {redirectScheme && (
+                <Button onClick={finishAuth}>Complete Authentication</Button>
+              )}
+            </>
           )}
         </div>
 
