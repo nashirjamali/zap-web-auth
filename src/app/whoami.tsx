@@ -1,35 +1,43 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
-import { AuthClient } from '@dfinity/auth-client';
-import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense, useCallback } from "react";
+import { AuthClient } from "@dfinity/auth-client";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 // For local development, you might need to use a different URL
-// const identityProvider = process.env.NODE_ENV === 'production' 
-//   ? 'https://identity.ic0.app' 
+// const identityProvider = process.env.NODE_ENV === 'production'
+//   ? 'https://identity.ic0.app'
 //   : 'http://localhost:8000?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai';
 
-const identityProvider = 'https://identity.ic0.app';
+const identityProvider = "https://identity.ic0.app";
 
 // Reusable button component with proper types
 interface ButtonProps {
   onClick: () => void;
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary';
+  variant?: "primary" | "secondary";
   className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({ onClick, children, variant = 'primary', className = '' }) => {
-  const baseStyles = "px-6 py-3 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 shadow-sm text-base";
-  
+const Button: React.FC<ButtonProps> = ({
+  onClick,
+  children,
+  variant = "primary",
+  className = "",
+}) => {
+  const baseStyles =
+    "px-6 py-3 rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 shadow-sm text-base";
+
   const variantStyles = {
-    primary: "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500",
-    secondary: "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500"
+    primary:
+      "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 focus:ring-blue-500",
+    secondary:
+      "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500",
   };
-  
+
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`${baseStyles} ${variantStyles[variant]} ${className}`}
     >
@@ -61,8 +69,8 @@ const LoadingFallback = () => (
 // Inner component that uses useSearchParams
 const WhoAmIInner = () => {
   const searchParams = useSearchParams();
-  const redirectScheme = searchParams.get('redirectScheme');
-  
+  const redirectScheme = searchParams.get("redirectScheme");
+
   const [state, setState] = useState<{
     authClient: AuthClient | undefined;
     isAuthenticated: boolean;
@@ -76,36 +84,41 @@ const WhoAmIInner = () => {
     principal: null,
     error: null,
     isClientSide: false,
-    isLoading: false
+    isLoading: false,
   });
 
   // Memoize fetchPrincipalId with useCallback
   const fetchPrincipalId = useCallback(async () => {
     if (!state.authClient) return;
-    
+
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      const principal = state.authClient.getIdentity().getPrincipal().toString();
-      setState(prev => ({
+      setState((prev) => ({ ...prev, isLoading: true }));
+      const principal = state.authClient
+        .getIdentity()
+        .getPrincipal()
+        .toString();
+      setState((prev) => ({
         ...prev,
         principal,
-        isLoading: false
+        isLoading: false,
       }));
     } catch (error) {
       console.error("Error fetching principal ID:", error);
-      setState(prev => ({ 
-        ...prev, 
-        error: `Failed to fetch principal ID: ${error instanceof Error ? error.message : String(error)}`,
-        isLoading: false
+      setState((prev) => ({
+        ...prev,
+        error: `Failed to fetch principal ID: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        isLoading: false,
       }));
     }
   }, [state.authClient]);
 
   // First, check if we're running in the browser
   useEffect(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      isClientSide: true
+      isClientSide: true,
     }));
   }, []);
 
@@ -118,16 +131,16 @@ const WhoAmIInner = () => {
 
   // Update URL with principal ID when it becomes available
   useEffect(() => {
-    if (state.principal && typeof window !== 'undefined') {
+    if (state.principal && typeof window !== "undefined") {
       // Get current URL
       const url = new URL(window.location.href);
-      
+
       // Add or update principalId parameter
-      url.searchParams.set('principalId', state.principal);
-      
+      url.searchParams.set("principalId", state.principal);
+
       // Update the URL without reloading the page
-      window.history.replaceState({}, '', url.toString());
-      
+      window.history.replaceState({}, "", url.toString());
+
       // If redirectScheme is present, the user can click "Complete Authentication" to trigger the redirect
     }
   }, [state.principal, redirectScheme]);
@@ -144,25 +157,27 @@ const WhoAmIInner = () => {
         console.log("Auth client initialized successfully");
       } catch (error) {
         console.error("Error initializing auth client:", error);
-        setState(prev => ({
+        setState((prev) => ({
           ...prev,
-          error: `Auth initialization failed: ${error instanceof Error ? error.message : String(error)}`
+          error: `Auth initialization failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
         }));
       }
     };
-    
+
     init();
   }, [state.isClientSide]); // Only run when isClientSide changes to true
 
   const initAuth = async () => {
     try {
       // Ensure we're in a browser environment with crypto support
-      if (typeof window === 'undefined' || !window.crypto) {
-        throw new Error('SubtleCrypto is not available in this environment');
+      if (typeof window === "undefined" || !window.crypto) {
+        throw new Error("SubtleCrypto is not available in this environment");
       }
 
-      setState(prev => ({ ...prev, isLoading: true }));
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       const authClient = await AuthClient.create();
       const isAuthenticated = await authClient.isAuthenticated();
       console.log("Authentication status:", isAuthenticated);
@@ -172,13 +187,13 @@ const WhoAmIInner = () => {
         authClient,
         isAuthenticated,
         error: null,
-        isLoading: false
+        isLoading: false,
       }));
-      
+
       return authClient;
     } catch (error) {
       console.error("Error in initAuth:", error);
-      setState(prev => ({ ...prev, isLoading: false }));
+      setState((prev) => ({ ...prev, isLoading: false }));
       throw error;
     }
   };
@@ -186,17 +201,17 @@ const WhoAmIInner = () => {
   const login = async () => {
     if (!state.authClient) {
       console.error("Auth client not initialized");
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: "Cannot login: Auth client not initialized"
+        error: "Cannot login: Auth client not initialized",
       }));
       return;
     }
-    
+
     console.log("Starting login process...");
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
-      
+      setState((prev) => ({ ...prev, isLoading: true }));
+
       await state.authClient.login({
         identityProvider,
         onSuccess: () => {
@@ -205,48 +220,52 @@ const WhoAmIInner = () => {
         },
         onError: (error) => {
           console.error("Login error:", error);
-          setState(prev => ({
+          setState((prev) => ({
             ...prev,
             error: `Login failed: ${error}`,
-            isLoading: false
+            isLoading: false,
           }));
-        }
+        },
       });
     } catch (error) {
       console.error("Exception during login:", error);
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
-        error: `Login exception: ${error instanceof Error ? error.message : String(error)}`,
-        isLoading: false
+        error: `Login exception: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        isLoading: false,
       }));
     }
   };
 
   const logout = async () => {
     if (!state.authClient) return;
-    
+
     try {
-      setState(prev => ({ ...prev, isLoading: true }));
+      setState((prev) => ({ ...prev, isLoading: true }));
       await state.authClient.logout();
       await initAuth();
-      setState(prev => ({ 
-        ...prev, 
+      setState((prev) => ({
+        ...prev,
         principal: null,
-        isLoading: false
+        isLoading: false,
       }));
-      
+
       // Remove principalId from URL
-      if (typeof window !== 'undefined') {
+      if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
-        url.searchParams.delete('principalId');
-        window.history.replaceState({}, '', url.toString());
+        url.searchParams.delete("principalId");
+        window.history.replaceState({}, "", url.toString());
       }
     } catch (error) {
       console.error("Error during logout:", error);
-      setState(prev => ({ 
-        ...prev, 
-        error: `Logout failed: ${error instanceof Error ? error.message : String(error)}`,
-        isLoading: false
+      setState((prev) => ({
+        ...prev,
+        error: `Logout failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+        isLoading: false,
       }));
     }
   };
@@ -254,23 +273,23 @@ const WhoAmIInner = () => {
   // Complete auth and redirect back to the app with principal ID
 
   /**
-   * 
+   *
    * http://zap-web-auth-t8vc.vercel.app/?redirectUrl=zap-xx%3A%2F%2Fauth&principalId=pzq44-pn54p-dv4ys-bjwvu-oi6ph-a23jl-n7dkp-jothd-jo5wq-ngmrm-iqe
    * http://zap-web-auth-t8vc.vercel.app/?redirectUrl=zap-x//auth&principalId=pzq44-pn54p-dv4ys-bjwvu-oi6ph-a23jl-n7dkp-jothd-jo5wq-ngmrm-iqe
    */
   const finishAuth = () => {
-  if (state.principal && redirectScheme) {
-    // Decode the redirectScheme in case it's URL encoded
-    const decodedRedirectScheme = decodeURIComponent(redirectScheme);
-    
-    // Extract just the scheme part (before ://)
-    const schemeMatch = decodedRedirectScheme.match(/^([^:]+):/);
-    const scheme = schemeMatch ? schemeMatch[1] : decodedRedirectScheme;
-    
-    // Construct the redirect URL
-    window.location.href = `${scheme}://auth?principalId=${state.principal}`;
-  }
-};
+    if (state.principal && redirectScheme) {
+      // Decode the redirectScheme in case it's URL encoded
+      const decodedRedirectScheme = decodeURIComponent(redirectScheme);
+
+      // Extract just the scheme part (before ://)
+      const schemeMatch = decodedRedirectScheme.match(/^([^:]+):/);
+      const scheme = schemeMatch ? schemeMatch[1] : decodedRedirectScheme;
+
+      // Construct the redirect URL
+      window.location.href = `${scheme}://auth?principalId=${state.principal}`;
+    }
+  };
 
   // Display a loading state if we're not on the client side yet
   if (!state.isClientSide) {
@@ -282,54 +301,63 @@ const WhoAmIInner = () => {
       <div className="max-w-4xl mx-auto w-full px-6 py-12">
         <div className="flex flex-col items-center mb-10">
           <div className="relative w-20 h-20 mb-4">
-            <Image 
-              src="/zap.png" 
-              alt="Zap Logo" 
+            <Image
+              src="/zap.png"
+              alt="Zap Logo"
               fill
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: "contain" }}
               priority
             />
           </div>
           <h1 className="text-4xl font-bold text-center">Zap Authentication</h1>
-          <p className="mt-2 text-xl text-center text-blue-400">Fast payments with Internet Computer</p>
+          <p className="mt-2 text-xl text-center text-blue-400">
+            Fast payments with Internet Computer
+          </p>
         </div>
-        
+
         {state.error && (
           <div className="mb-8 p-4 bg-red-900/50 border border-red-500 rounded-lg">
-            <p className="font-medium text-red-300"><strong>Error:</strong> {state.error}</p>
+            <p className="font-medium text-red-300">
+              <strong>Error:</strong> {state.error}
+            </p>
             <p className="mt-2 text-red-300">
-              <strong>Note:</strong> This could be because the SubtleCrypto API is not available. 
-              Make sure you&apos;re accessing this page over HTTPS, as some browsers require a secure context 
-              for cryptographic operations.
+              <strong>Note:</strong> This could be because the SubtleCrypto API
+              is not available. Make sure you&apos;re accessing this page over
+              HTTPS, as some browsers require a secure context for cryptographic
+              operations.
             </p>
           </div>
         )}
-        
+
         <div className="mb-8 p-6 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg">
           <div className="flex items-center mb-4">
             <div className="relative w-8 h-8 mr-3">
-              <Image 
-                src="/icp.png" 
-                alt="Internet Computer Protocol" 
+              <Image
+                src="/icp.png"
+                alt="Internet Computer Protocol"
                 fill
-                style={{ objectFit: 'contain' }}
+                style={{ objectFit: "contain" }}
               />
             </div>
-            <h2 className="text-2xl font-semibold text-blue-400">Zap Payment App</h2>
+            <h2 className="text-2xl font-semibold text-blue-400">
+              Zap Payment App
+            </h2>
           </div>
           <p className="mb-3 text-gray-300">
-            Welcome to the Zap app - your fast and secure solution for payments with ICP (Internet Computer Protocol).
+            Welcome to the Zap app - your fast and secure solution for payments
+            with ICP (Internet Computer Protocol).
           </p>
           <p className="mb-3 text-gray-300">
             {!state.isAuthenticated ? (
               <>
-                To start making payments, please log in with Internet Identity. 
-                This secure authentication system will generate your unique principal ID.
+                To start making payments, please log in with Internet Identity.
+                This secure authentication system will generate your unique
+                principal ID.
               </>
             ) : (
               <>
-                You&apos;re now logged in and ready to make fast payments with ICP. 
-                Your unique principal ID is displayed below.
+                You&apos;re now logged in and ready to make fast payments with
+                ICP. Your unique principal ID is displayed below.
               </>
             )}
           </p>
@@ -339,9 +367,25 @@ const WhoAmIInner = () => {
           {state.isLoading ? (
             <div className="px-6 py-3 rounded-md bg-gray-700 text-gray-400">
               <div className="flex items-center">
-                <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg
+                  className="animate-spin h-5 w-5 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
                 </svg>
                 Processing...
               </div>
@@ -349,18 +393,20 @@ const WhoAmIInner = () => {
           ) : !state.isAuthenticated ? (
             <Button onClick={login} className="flex items-center">
               <div className="relative w-5 h-5 mr-2">
-                <Image 
-                  src="/icp.png" 
-                  alt="ICP" 
+                <Image
+                  src="/icp.png"
+                  alt="ICP"
                   fill
-                  style={{ objectFit: 'contain' }}
+                  style={{ objectFit: "contain" }}
                 />
               </div>
               Login with Internet Identity
             </Button>
           ) : (
             <>
-              <Button onClick={logout} variant="secondary">Logout</Button>
+              <Button onClick={logout} variant="secondary">
+                Logout
+              </Button>
               {redirectScheme && (
                 <Button onClick={finishAuth}>Complete Authentication</Button>
               )}
@@ -370,13 +416,26 @@ const WhoAmIInner = () => {
 
         {state.principal && (
           <div className="p-6 bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-lg overflow-hidden">
-            <h2 className="text-2xl font-semibold mb-4 text-blue-400">Your principal ID is:</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-blue-400">
+              Your principal ID is:
+            </h2>
             <div className="p-4 bg-gray-900 border border-gray-700 rounded-md overflow-x-auto">
-              <code className="font-mono text-green-400 break-all">{state.principal}</code>
+              <code className="font-mono text-green-400 break-all">
+                {state.principal}
+              </code>
             </div>
             <div className="mt-4 flex items-center text-green-400">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
               </svg>
               <span>Authenticated with Internet Identity</span>
             </div>
